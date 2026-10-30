@@ -1,0 +1,233 @@
+{
+  "info": {
+    "name": "BidVelocity Microservices Academic Suite",
+    "description": "Complete end-to-end API collection for BidVelocity Distributed Bidding & Auction Clearance Engine",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8080" },
+    { "key": "jwtToken", "value": "" },
+    { "key": "auctionId", "value": "1" },
+    { "key": "paymentId", "value": "1" }
+  ],
+  "item": [
+    {
+      "name": "1. Authentication",
+      "item": [
+        {
+          "name": "Register Seller",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"alice_seller\",\n  \"email\": \"alice@bidvelocity.com\",\n  \"password\": \"sellerPass123!\",\n  \"role\": \"ROLE_SELLER\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/auth/register" }
+          }
+        },
+        {
+          "name": "Register Buyer 1 (Bob)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"bob_buyer\",\n  \"email\": \"bob@bidvelocity.com\",\n  \"password\": \"buyerPass123!\",\n  \"role\": \"ROLE_BUYER\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/auth/register" }
+          }
+        },
+        {
+          "name": "Register Buyer 2 (Charlie)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"charlie_buyer\",\n  \"email\": \"charlie@bidvelocity.com\",\n  \"password\": \"buyerPass123!\",\n  \"role\": \"ROLE_BUYER\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/auth/register" }
+          }
+        },
+        {
+          "name": "Login as Bob (Saves Token)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"bob_buyer\",\n  \"password\": \"buyerPass123!\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/auth/login" }
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Auctions",
+      "item": [
+        {
+          "name": "Create Auction Listing (Seller)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{jwtToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"itemName\": \"Vintage Rolex Submariner 1968\",\n  \"description\": \"Original vintage mechanical watch in pristine condition.\",\n  \"startingPrice\": 25000.00,\n  \"reservePrice\": 30000.00,\n  \"endTime\": \"2026-12-31T23:59:59\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/auctions" }
+          }
+        },
+        {
+          "name": "List All Auctions",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/auctions" }
+          }
+        },
+        {
+          "name": "Get Auction by ID",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/auctions/{{auctionId}}" }
+          }
+        },
+        {
+          "name": "Close Auction (Triggers Payment Pending)",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Authorization", "value": "Bearer {{jwtToken}}" }],
+            "url": { "raw": "{{baseUrl}}/api/auctions/{{auctionId}}/close" }
+          }
+        },
+        {
+          "name": "Offer Second Chance (If Winner Unpaid)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{jwtToken}}" }],
+            "url": { "raw": "{{baseUrl}}/api/auctions/{{auctionId}}/second-chance" }
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Bidding",
+      "item": [
+        {
+          "name": "Place First Bid (Bob: 28,000)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{jwtToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"auctionId\": 1,\n  \"bidAmount\": 28000.00,\n  \"bidRequestId\": \"req-bid-001\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/bids" }
+          }
+        },
+        {
+          "name": "Place Higher Bid (Charlie: 35,000)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{jwtToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"auctionId\": 1,\n  \"bidAmount\": 35000.00,\n  \"bidRequestId\": \"req-bid-002\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/bids" }
+          }
+        },
+        {
+          "name": "Test Sub-Threshold Bid (Rejection 409)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{jwtToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"auctionId\": 1,\n  \"bidAmount\": 30000.00,\n  \"bidRequestId\": \"req-bid-003\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/bids" }
+          }
+        },
+        {
+          "name": "Test Idempotent Bid Replay (Should return previous)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{jwtToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"auctionId\": 1,\n  \"bidAmount\": 35000.00,\n  \"bidRequestId\": \"req-bid-002\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/bids" }
+          }
+        },
+        {
+          "name": "Get Bids for Auction",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/bids/auction/1" }
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Mock Payment Gateway & Webhook",
+      "item": [
+        {
+          "name": "Get Checkout Details with QR Code",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/payments/1/checkout" }
+          }
+        },
+        {
+          "name": "Simulate Payment via Server (SUCCESS)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"PUT_CHECKOUT_TOKEN_HERE\",\n  \"action\": \"SUCCESS\",\n  \"transactionRef\": \"UPI-UTR-998877665544\",\n  \"idempotencyKey\": \"IDEMP-TEST-001\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/payments/mock-gateway/simulate-submit" }
+          }
+        },
+        {
+          "name": "Simulate Duplicate Callback (Idempotency Replay)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"PUT_CHECKOUT_TOKEN_HERE\",\n  \"action\": \"SUCCESS\",\n  \"transactionRef\": \"UPI-UTR-998877665544\",\n  \"idempotencyKey\": \"IDEMP-TEST-001\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/payments/mock-gateway/simulate-submit" }
+          }
+        },
+        {
+          "name": "Manual Reconciliation (Admin Recovery)",
+          "request": {
+            "method": "POST",
+            "url": { "raw": "{{baseUrl}}/api/payments/1/reconcile-manual" }
+          }
+        }
+      ]
+    }
+  ]
+}

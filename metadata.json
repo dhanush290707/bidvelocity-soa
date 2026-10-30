@@ -1,0 +1,6 @@
+{
+  "name": "BidVelocity - Distributed Auction & Clearance Engine",
+  "description": "Real-time distributed bidding and auction clearance engine with Spring Boot microservices, Eureka, API Gateway, and mock UPI payment clearance.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

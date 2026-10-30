@@ -1,0 +1,131 @@
+services:
+  # ====================================================================
+  # Service Discovery: Eureka Server (Port 8761)
+  # ====================================================================
+  eureka-server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE: eureka-server
+    container_name: bidvelocity-eureka
+    ports:
+      - "8761:8761"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:8761/actuator/health || exit 0"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ====================================================================
+  # Microservice 1: Auth Service (Port 8081)
+  # ====================================================================
+  auth-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE: auth-service
+    container_name: bidvelocity-auth
+    ports:
+      - "8081:8081"
+    # Credentials stay in .env.local (Git-ignored). Docker Desktop resolves
+    # host.docker.internal to the PostgreSQL server running on your Mac.
+    env_file:
+      - .env.local
+    environment:
+      - POSTGRES_HOST=host.docker.internal
+      - EUREKA_HOST=eureka-server
+      - JWT_SECRET=BidVelocitySecretKey2026ForAcademicDistributedSystemsEvaluationMustBeVeryLong32CharsMin
+    depends_on:
+      eureka-server:
+        condition: service_started
+
+  # ====================================================================
+  # Microservice 2: Auction Service (Port 8082)
+  # ====================================================================
+  auction-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE: auction-service
+    container_name: bidvelocity-auction
+    ports:
+      - "8082:8082"
+    env_file:
+      - .env.local
+    environment:
+      - POSTGRES_HOST=host.docker.internal
+      - EUREKA_HOST=eureka-server
+      - INTERNAL_SERVICE_SECRET=bidvelocity-internal-secure-secret-2026
+    depends_on:
+      eureka-server:
+        condition: service_started
+
+  # ====================================================================
+  # Microservice 3: Bidding Service (Port 8083)
+  # ====================================================================
+  bidding-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE: bidding-service
+    container_name: bidvelocity-bidding
+    ports:
+      - "8083:8083"
+    env_file:
+      - .env.local
+    environment:
+      - POSTGRES_HOST=host.docker.internal
+      - EUREKA_HOST=eureka-server
+      - INTERNAL_SERVICE_SECRET=bidvelocity-internal-secure-secret-2026
+    depends_on:
+      eureka-server:
+        condition: service_started
+
+  # ====================================================================
+  # Microservice 4: Payment Service (Port 8084)
+  # ====================================================================
+  payment-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE: payment-service
+    container_name: bidvelocity-payment
+    ports:
+      - "8084:8084"
+    env_file:
+      - .env.local
+    environment:
+      - POSTGRES_HOST=host.docker.internal
+      - EUREKA_HOST=eureka-server
+      - CHECKOUT_BASE_URL=http://localhost:8080
+      - INTERNAL_SERVICE_SECRET=bidvelocity-internal-secure-secret-2026
+      - WEBHOOK_SECRET=bidvelocity-mock-payment-gateway-hmac-sha256-secret-key-2026
+    depends_on:
+      eureka-server:
+        condition: service_started
+
+  # ====================================================================
+  # API Gateway: Spring Cloud Gateway (Port 8080)
+  # ====================================================================
+  api-gateway:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE: api-gateway
+    container_name: bidvelocity-gateway
+    ports:
+      - "8080:8080"
+    environment:
+      - EUREKA_HOST=eureka-server
+      - JWT_SECRET=BidVelocitySecretKey2026ForAcademicDistributedSystemsEvaluationMustBeVeryLong32CharsMin
+    depends_on:
+      eureka-server:
+        condition: service_started
